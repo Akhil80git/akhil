@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vertax Projects - Live UI Showcase</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background-color: #090d16;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #38bdf8;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .category-title {
+            color: #38bdf8;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 25px 0 12px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        /* Card ki Height Bada di gayi hai (Increased Height) */
+        .card {
+            background-color: #111827;
+            border: 1px solid #1f2937;
+            border-left: 4px solid #38bdf8;
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            height: 200px; /* Badi Height */
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: #38bdf8;
+        }
+
+        /* Asli Live UI Frame Box */
+        .preview-ui-box {
+            width: 100%;
+            height: 110px;
+            background-color: #030712;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Scaled Iframe to render actual UI preview */
+        .preview-ui-box iframe {
+            width: 400%;
+            height: 400%;
+            border: none;
+            transform: scale(0.25);
+            transform-origin: 0 0;
+            pointer-events: none; /* Disables click inside preview */
+        }
+
+        .live-indicator {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #10b981;
+            z-index: 2;
+        }
+
+        .card-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #f3f4f6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .open-btn {
+            font-size: 11px;
+            color: #38bdf8;
+            background: #1f2937;
+            padding: 4px 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            border: 1px solid #374151;
+            white-space: nowrap;
+        }
+
+        .open-btn:hover {
+            background: #38bdf8;
+            color: #000;
+        }
+
+        /* Fullscreen Modal Screen Viewer */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-box {
+            width: 90%;
+            height: 90%;
+            max-width: 1200px;
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background: #1f2937;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #374151;
+        }
+
+        .modal-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .close-btn {
+            background: #ef4444;
+            color: #ffffff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: #dc2626;
+        }
+
+        .modal-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Vertax Projects Ecosystem</h1>
+        <p>Large Cards with Live App UI Previews (Click Card to View)</p>
+    </div>
+
+    <!-- Modal Popup Structure -->
+    <div class="modal-overlay" id="appModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span class="modal-title" id="modalTitle">Project View</span>
+                <button class="close-btn" onclick="closeModal()">✕</button>
+            </div>
+            <iframe id="modalIframe" class="modal-iframe" src="about:blank"></iframe>
+        </div>
+    </div>
+
+    <div id="mainContainer"></div>
+
+<script>
+    const data = [
+        { cat: "🚗 Transit, Mobility & Tracking", items: [
+            { t: "ImageX Ten Fare Engine", u: "https://imagex-ten.vercel.app" },
+            { t: "HTML Cloud Link Transport", u: "https://htmlcloudlinkmain-jokq.onrender.com" },
+            { t: "7VC Transport Booking", u: "https://7vc.vercel.app" },
+            { t: "6VC Local Vehicle Booking", u: "https://6vc.netlify.app" },
+            { t: "GPS Step & Speed Tracker", u: "https://erx-35zb.onrender.com" },
+            { t: "Public Live Bus Tracker", u: "https://bn-xglf.onrender.com" }
+        ]},
+        { cat: "💬 Realtime Calling & Chat", items: [
+            { t: "WebRTC Voice & Video Calling", u: "https://calling-wqn1.onrender.com" },
+            { t: "ChatX Realtime System", u: "https://chatx-w7a1.onrender.com" },
+            { t: "Village ChatX + Admin Suite", u: "https://village-zigx.onrender.com" }
+        ]},
+        { cat: "🔑 Auth, Security & Services", items: [
+            { t: "Razorpay Test Gateway", u: "https://rezorpaytest.onrender.com" },
+            { t: "PWA Service Worker Test", u: "https://fist-reattest-pumq.vercel.app" },
+            { t: "OPLOTP Firebase Auth", u: "https://oplotp.firebaseapp.com" },
+            { t: "YUT Omega Firebase Auth", u: "https://yut-omega.vercel.app" },
+            { t: "Student Attendance & Math", u: "https://gpscodpen.vercel.app" }
+        ]},
+        { cat: "🌐 Portfolios & Web Platforms", items: [
+            { t: "AI Map Lovat System", u: "https://aimap-lovat.vercel.app" },
+            { t: "Project Track All Platform", u: "https://project-track-all.vercel.app" },
+            { t: "12Z Vercel App", u: "https://12z.vercel.app" },
+            { t: "FDSDF 1MMM Platform", u: "https://fdsdf-1mmm.vercel.app" },
+            { t: "TYXWW Front Engine", u: "https://tyxwwfront.vercel.app" },
+            { t: "School VK85 System", u: "https://school-vk85.vercel.app" },
+            { t: "Demo Razorpay Gateway", u: "https://demorezorpay.vercel.app" },
+            { t: "Basic Vercel Platform", u: "https://besic.vercel.app" },
+            { t: "Food1 Framesite Portal", u: "https://food1-framesite.vercel.app" }
+        ]}
+    ];
+
+    const container = document.getElementById('mainContainer');
+
+    data.forEach(sec => {
+        const catHeader = document.createElement('div');
+        catHeader.className = 'category-title';
+        catHeader.innerText = sec.cat;
+        container.appendChild(catHeader);
+
+        const grid = document.createElement('div');
+        grid.className = 'grid-container';
+
+        sec.items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => openModal(item.u, item.t);
+
+            card.innerHTML = `
+                <div class="preview-ui-box">
+                    <span class="live-indicator"></span>
+                    <iframe src="${item.u}" loading="lazy"></iframe>
+                </div>
+                <div class="card-info">
+                    <div class="card-title">${item.t}</div>
+                    <a href="${item.u}" target="_blank" onclick="event.stopPropagation()" class="open-btn">open ↗</a>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        container.appendChild(grid);
+    });
+
+    function openModal(url, title) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalIframe').src = url;
+        document.getElementById('appModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        document.getElementById('appModal').style.display = 'none';
+        document.getElementById('modalIframe').src = 'about:blank';
+        document.body.style.overflow = 'auto';
+    }
+
+    // Keep Alive Ping Engine
+    const allUrls = data.flatMap(s => s.items.map(i => i.u));
+    let index = 0;
+    setInterval(() => {
+        if(allUrls.length > 0) {
+            fetch(allUrls[index], { mode: 'no-cors' }).catch(() => {});
+            index = (index + 1) % allUrls.length;
+        }
+    }, 10000);
+</script>
+</body>
+</html>
